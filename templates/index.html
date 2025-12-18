@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Grayscale - Start Bootstrap Theme</title>
+{% endblock %}
+
+{% block body %}
+<!-- Navigation-->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+    <div class="container px-4 px-lg-5">
+        <a class="navbar-brand" href="#page-top">Home</a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            Menu
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+                <li class="nav-item"><a class="nav-link" href="#projects">Projects</a></li>
+                <li class="nav-item"><a class="nav-link" href="#signup">Contact</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<!-- Masthead-->
+<header class="masthead">
+    <div class="container px-4 px-lg-5 d-flex h-100 align-items-center justify-content-center">
+        <div class="d-flex justify-content-center">
+            <div class="text-center">
+                <h1 class="mx-auto my-0 text-uppercase">Ethan Fogarty</h1>
+                <h2 class="text-white-50 mx-auto mt-2 mb-5">New B.S. in Computer Science graduate specializing in machine learning and systems engineering.</h2>
+                <a class="btn btn-primary" href="#about">Get Started</a>
+            </div>
+        </div>
+    </div>
+</header>
+<!-- About-->
+<section class="about-section text-center" id="about">
+    <div class="container px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-lg-8">
+                <h2 class="text-white mb-4">Background</h2>
+                <p class="text-white-50">
+                    I’m a recent B.S. in Computer Science graduate 
+                    with a strong focus on generative deep learning and MLOps. 
+                    I have multiple years of undergraduate research experience building 
+                    and training deep learning models, along with hands-on experience 
+                    deploying models using Docker, TensorFlow Serve, and cloud infrastructure. 
+                    I enjoy working across the full pipeline—from data and experimentation 
+                    to production-ready systems.
+                </p>
+            </div>
+        </div>
+        <!-- <img class="img-fluid" src="{{url_for('static', filename='assets/img/ipad.png')}}" alt="..." /> -->
+    </div>
+</section>
+<!-- Projects-->
+<section class="projects-section bg-light" id="projects">
+    <div class="container px-4 px-lg-5">
+        <!-- Featured Project Row-->
+        <div class="row gx-0 mb-4 mb-lg-5 align-items-center">
+            <div class="col-xl-8 col-lg-7">
+                <div class="llm-output mb-3">
+                    <textarea
+                        id="llmOutput"
+                        class="form-control"
+                        rows="6"
+                        placeholder="Model output will appear here..."
+                        readonly
+                    ></textarea>
+                </div>
+                <div class="col"><input class="form-control" id="llmInput" type="text" placeholder="Once upon a time, " /></div>
+                <div class="col-auto"><button class="btn btn-primary" id="generateButton" type="submit">Generate</button></div>
+            </div>
+            <div class="col-xl-4 col-lg-5">
+                <div class="featured-text text-center text-lg-left">
+                    <h4>SAM-1</h4>
+                    <p class="text-black-50 mb-0">A 9M parameter causal language model trained on the TinyStories dataset to complete short children's stories.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Project One Row-->
+        <div class="row gx-0 mb-5 mb-lg-0 justify-content-center">
+            <div class="col-lg-6">
+                <img class="img-fluid" src="{{ url_for('static', filename='assets/img/ds2_noise1_plot_1062.png') }}" alt="..." />
+                <img class="img-fluid" src="{{ url_for('static', filename='assets/img/ds2_noise2_plot_421.png') }}" alt="..." />
+                <img class="img-fluid" src="{{ url_for('static', filename='assets/img/ds2_noise3_plot_186.png') }}" alt="..." />
+            </div>
+            <div class="col-lg-6">
+                <div class="bg-black text-center h-100 project">
+                    <div class="d-flex h-100">
+                        <div class="project-text w-100 my-auto text-center text-lg-left">
+                            <h4 class="text-white"><a href="https://github.com/ehendryx/ecg_time_series_summarization/tree/main/noise_and_arrhythmia_identification/noise">Noise Detection VAE </a></h4>
+                            <p class="mb-0 text-white-50">The presence of noise in a signal can render that signal useless.
+                                I solve this problem by implementing a variational autoencoder to encode electrocardiogram
+                                signals. I then use a neural network to classify the encoded data, achieving a balanced
+                                accuracy of 76% across 3 noise classes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Project Two Row-->
+        <div class="row gx-0 justify-content-center">
+            <div class="col-lg-6"><img class="img-fluid" src="{{ url_for('static', filename='assets/img/demo-image-02.jpg') }}" alt="..." /></div>
+            <div class="col-lg-6 order-lg-first">
+                <div class="bg-black text-center h-100 project">
+                    <div class="d-flex h-100">
+                        <div class="project-text w-100 my-auto text-center text-lg-right">
+                            <h4 class="text-white"><a href="https://github.com/ehendryx/ecg_time_series_summarization/tree/main/noise_and_arrhythmia_identification/arrhythmia">Cardiac Arrhythmia VAE </a></h4>
+                            <p class="mb-0 text-white-50">Methods for automatic detection of anomalous heartbeats
+                                in electrocardiogram (ECG) data can aid physicians in diagnosing and treating cardiac 
+                                conditions. A variational autoencoder used to encode ECG signals that 
+                                would then be passed to a classifier for cardiac arrhythmia detection. 92.96% balanced accuracy.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Signup-->
+<section class="signup-section" id="signup">
+    <div class="container px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5">
+            <div class="col-md-10 col-lg-8 mx-auto text-center">
+                <i class="far fa-paper-plane fa-2x mb-2 text-white"></i>
+                <h2 class="text-white mb-5">Contact Information</h2>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Contact-->
+<section class="contact-section bg-black">
+    <div class="container px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="card py-4 h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-map-marked-alt text-primary mb-2"></i>
+                        <h4 class="text-uppercase m-0">Location</h4>
+                        <hr class="my-4 mx-auto" />
+                        <div class="small text-black-50">Moore, Oklahoma</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="card py-4 h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-envelope text-primary mb-2"></i>
+                        <h4 class="text-uppercase m-0">Email</h4>
+                        <hr class="my-4 mx-auto" />
+                        <div class="small text-black-50">ethanfogarty2101@gmail.com</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="card py-4 h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-mobile-alt text-primary mb-2"></i>
+                        <h4 class="text-uppercase m-0">Phone</h4>
+                        <hr class="my-4 mx-auto" />
+                        <div class="small text-black-50">+1 (405) 326-3193</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="social d-flex justify-content-center">
+            <a class="mx-2" href="https://www.linkedin.com/in/ethan-fogarty-7a0757396/"><i class="fab fa-linkedin-in"></i></a>
+            <a class="mx-2" href="https://github.com/ethanfogarty"><i class="fab fa-github"></i></a>
+        </div>
+    </div>
+</section>
+<!-- Bootstrap core JS-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Core theme JS-->
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+<!-- * *                               SB Forms JS                               * *-->
+<!-- * * Activate your form at https://startbootstrap.com/solution/contact-forms * *-->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+<script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
+{% endblock %}

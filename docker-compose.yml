@@ -1,0 +1,26 @@
+services:
+  web:
+    build: .
+    container_name: portfolio-web
+    ports:
+      - "80:5000"
+    environment:
+      # Flask will call TF Serving using the service name "tfserving"
+      - TFSERVING_URL=http://tfserving:8501/v1/models/sam9M:predict
+    restart: unless-stopped
+
+  tfserving:
+    image: tensorflow/serving:latest
+    container_name: tfserving
+    environment:
+      - MODEL_NAME=sam9M
+    volumes:
+      # Host folder -> TF Serving model base path
+      # Must be: ./models/sam9M/<SavedModel version number>/saved_model.pb
+      - /root/models:/models
+    expose:
+      - "8501"
+    # Optional: uncomment if you want to reach TF Serving from outside the server
+    # ports:
+    #   - "8501:8501"
+    restart: unless-stopped

@@ -56,6 +56,7 @@ window.addEventListener('DOMContentLoaded', event => {
     const output = document.getElementById("llmOutput");
 
     btn.addEventListener("click", async () => {
+        return; // this is to temporarily disable the generate button while SAM gets fixed
         const prompt = input.value.trim();
         if (!prompt) return;
 

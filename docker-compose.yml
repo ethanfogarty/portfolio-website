@@ -3,7 +3,7 @@ services:
     build: .
     container_name: portfolio-web
     ports:
-      - "80:5000"
+      - "5000:5000"
     environment:
       # Flask will call TF Serving using the service name "tfserving"
       - TFSERVING_URL=http://tfserving:8501/v1/models/sam9M:predict

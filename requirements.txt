@@ -1,2 +1,3 @@
 flask
 requests
+keras_hub

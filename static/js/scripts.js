@@ -56,7 +56,7 @@ window.addEventListener('DOMContentLoaded', event => {
     const output = document.getElementById("llmOutput");
 
     btn.addEventListener("click", async () => {
-        return; // this is to temporarily disable the generate button while SAM gets fixed
+        //return; // this is to temporarily disable the generate button while SAM gets fixed
         const prompt = input.value.trim();
         if (!prompt) return;
 
@@ -65,19 +65,19 @@ window.addEventListener('DOMContentLoaded', event => {
         console.log("Generate button clicked");
 
         try {
-        const res = await fetch("/api/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt })
-        });
+            const res = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt })
+            });
 
-        const data = await res.json();
-        output.value = data.text ?? "(no text returned)";
+            const data = await res.json();
+            output.value = data.text ?? "(no text returned)";
         } catch (e) {
-        output.value = "Error calling model.";
-        console.error(e);
+            output.value = "Error calling model.";
+            console.error(e);
         } finally {
-        btn.disabled = false;
+            btn.disabled = false;
         }
     });
 

@@ -57,7 +57,7 @@ def callTFServing(prompt):
         "signature_name": "serve",
         "instances": [{"args_0": prompt}]
     }
-    r = requests.post(TF_SERVING_URL, json=payload, timeout=60)
+    r = requests.post(TFSERVING_URL, json=payload, timeout=60)
     r.raise_for_status()
     return r.json()["predictions"][0]  # shape [296, 15000]
 

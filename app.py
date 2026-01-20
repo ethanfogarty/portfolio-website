@@ -88,7 +88,8 @@ def detokenizeIds(token_ids):
     try:
         return out.numpy().decode("utf-8")
     except Exception:
-        return str(out[0])
+        #return str(out[0])
+        return str(out)
 
 
 def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50):

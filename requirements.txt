@@ -1,3 +1,4 @@
 flask
 requests
 keras_hub
+numpy

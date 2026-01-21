@@ -27,13 +27,6 @@ SPM = SentencePieceTokenizer(
 # -----------------------------
 # Helpers: sampling + TF call
 # -----------------------------
-def softmaxMath(logits):    # Unused due to exponentially slower speed vs Numpy function
-    m = max(logits)
-    exps = [math.exp(x - m) for x in logits]
-    s = sum(exps)
-    return [e / s for e in exps]
-
-
 def softmaxNP(x):   # Numpy softmax function with significant speedup vs Math softmax
     x = x - np.max(x)
     exp_x = np.exp(x)
@@ -48,16 +41,6 @@ def topKFilter(logits, k):
     keep = set(idx[:k])
     neg_inf = -1e5
     return [logits[i] if i in keep else neg_inf for i in range(len(logits))]
-
-
-def sampleFromProbs(probs):
-    r = random.random()
-    cum = 0.0
-    for i, p in enumerate(probs):
-        cum += p
-        if r <= cum:
-            return i
-    return len(probs) - 1
 
 
 def sampleFromProbsOptimized(probs):
@@ -95,7 +78,6 @@ def tokenizePrompt(prompt: str):
     # Truncate to last SEQ_LEN tokens (keep most recent context)
     if len(ids) > SEQ_LEN:
         ids = ids[-SEQ_LEN:]
-
     prompt_len = len(ids)
 
     # Pad to SEQ_LEN
@@ -110,13 +92,46 @@ def tokenizePrompt(prompt: str):
 def detokenizeIds(token_ids):
     out = SPM.detokenize(token_ids)
     return str(out)
-    #try:
-        #return out.numpy().decode("utf-8")
-    #except Exception:
-        #return str(out)
 
 
-def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50):
+def filterLogitsTopKTopP(logits, top_k=50, top_p=0.9):
+    logits = np.asarray(logits, dtype=np.float32)
+
+    # --- top-k (matches: min_values = top_k_values[:, -1] then mask < min_values) ---
+    k = int(top_k) if top_k is not None else 0
+    if k > 0 and k < logits.size:
+        kth = np.partition(logits, -k)[-k]
+        logits = np.where(logits < kth, -1e10, logits)
+
+    # --- top-p / nucleus (matches sort->softmax->cumsum->mask->threshold->mask) ---
+    p = float(top_p) if top_p is not None else 1.0
+    if p < 1.0:
+        sorted_idx = np.argsort(logits)[::-1]
+        sorted_logits = logits[sorted_idx]
+        sorted_probs = softmaxNP(sorted_logits)
+        cumprobs = np.cumsum(sorted_probs)
+
+        cutoff = cumprobs > p
+        # shift cutoff right by 1 (keep at least the top token), matching tf.concat([0, cutoff[1:]])
+        if cutoff.size:
+            cutoff = np.concatenate([np.array([False]), cutoff[1:]])
+
+        sorted_logits_masked = np.where(cutoff, -1e10, sorted_logits)
+        thresh = np.min(sorted_logits_masked)
+        logits = np.where(logits < thresh, -1e10, logits)
+
+    return logits
+
+
+def sampleFromLogits(logits):
+    """
+    NumPy equivalent of tf.random.categorical(logits, 1) over a single logit vector.
+    """
+    probs = softmaxNP(np.asarray(logits, dtype=np.float32))
+    return int(np.random.choice(probs.size, p=probs))
+
+
+def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50, top_p=0.9):
     """
     Returns generated text (prompt + continuation).
     """
@@ -134,26 +149,15 @@ def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50):
         # For teacher-forcing style LM: logits at position t predict token t+1
         # Next token after last real token often comes from pos = current_len - 1
         pos = max(current_len - 1, 0)
-        #logits = logits_2d[pos]
-        #logits = np.asarray(logits_2d[pos], dtype=np.float32)
         logits = np.asarray(logits_2d[pos])
 
         # temperature
         if temperature and temperature != 1.0:
-            #logits = [x / temperature for x in logits]
             logits = logits / float(temperature)
 
         # top-k filter then sample
-        #logits = topKFilter(logits, top_k)
-        #probs = softmax(logits)
-        #next_id = sampleFromProbs(probs)
-        if top_k is not None and top_k > 0 and top_k < logits.size:
-            idx = np.argpartition(logits, -top_k)[-top_k:]
-            filtered = np.full_like(logits, -1e5)
-            filtered[idx] = logits[idx]
-            logits = filtered
-        probs = softmaxNP(logits)
-        next_id = sampleFromProbsOptimized(probs)
+        logits_f = filterLogitsTopKTopP(logits, top_k=top_k, top_p=top_p)
+        next_id = sampleFromLogits(logits_f)
 
         # stop on EOS
         if EOS_ID is not None and next_id == EOS_ID:
@@ -163,8 +167,6 @@ def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50):
 
         # update rolling window: append next_id then keep last SEQ_LEN
         # window_vec is floats; keep sending floats
-        #window_vec.append(float(next_id))
-        #window_vec = window_vec[-SEQ_LEN:]
         if len(window_vec) < SEQ_LEN:
             window_vec.append(float(next_id))
         else:
@@ -186,6 +188,7 @@ def apiGenerate():
         max_new_tokens=20,
         temperature=0.7,
         top_k=500,
+        top_p=0.9,
     )
     return jsonify({"text": text})
 

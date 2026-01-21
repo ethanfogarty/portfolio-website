@@ -1,6 +1,7 @@
 from flask import Flask, render_template, url_for, request, jsonify
 from keras_hub.tokenizers import SentencePieceTokenizer
 import os, requests, math, random
+import numpy as np
 
 app = Flask(__name__)
 
@@ -26,11 +27,18 @@ SPM = SentencePieceTokenizer(
 # -----------------------------
 # Helpers: sampling + TF call
 # -----------------------------
-def softmax(logits):
+def softmaxMath(logits):    # Unused due to exponentially slower speed vs Numpy function
     m = max(logits)
     exps = [math.exp(x - m) for x in logits]
     s = sum(exps)
     return [e / s for e in exps]
+
+
+def softmaxNP(x):   # Numpy softmax function with significant speedup vs Math softmax
+    x = x - np.max(x)
+    exp_x = np.exp(x)
+    return exp_x / np.sum(exp_x)
+
 
 def topKFilter(logits, k):
     """Keep only top-k logits; set the rest to a large negative number."""
@@ -41,7 +49,25 @@ def topKFilter(logits, k):
     neg_inf = -1e5
     return [logits[i] if i in keep else neg_inf for i in range(len(logits))]
 
+
 def sampleFromProbs(probs):
+    r = random.random()
+    cum = 0.0
+    for i, p in enumerate(probs):
+        cum += p
+        if r <= cum:
+            return i
+    return len(probs) - 1
+
+
+def sampleFromProbsOptimized(probs):
+    # Vectorized cumulative-sum sampling when probs is a NumPy array (or array-like)
+    if isinstance(probs, np.ndarray):
+        r = np.random.random()
+        cum = np.cumsum(probs)
+        idx = int(np.searchsorted(cum, r, side="right"))
+        return idx if idx < len(probs) else (len(probs) - 1)
+
     r = random.random()
     cum = 0.0
     for i, p in enumerate(probs):
@@ -82,14 +108,12 @@ def tokenizePrompt(prompt: str):
 
 
 def detokenizeIds(token_ids):
-    # SentencePiece can decode ids directly
-    #return SPM.detokenize([int(x) for x in token_ids])
     out = SPM.detokenize(token_ids)
-    try:
-        return out.numpy().decode("utf-8")
-    except Exception:
-        #return str(out[0])
-        return str(out)
+    return str(out)
+    #try:
+        #return out.numpy().decode("utf-8")
+    #except Exception:
+        #return str(out)
 
 
 def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50):
@@ -110,16 +134,26 @@ def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50):
         # For teacher-forcing style LM: logits at position t predict token t+1
         # Next token after last real token often comes from pos = current_len - 1
         pos = max(current_len - 1, 0)
-        logits = logits_2d[pos]
+        #logits = logits_2d[pos]
+        #logits = np.asarray(logits_2d[pos], dtype=np.float32)
+        logits = np.asarray(logits_2d[pos])
 
         # temperature
         if temperature and temperature != 1.0:
-            logits = [x / temperature for x in logits]
+            #logits = [x / temperature for x in logits]
+            logits = logits / float(temperature)
 
         # top-k filter then sample
-        logits = topKFilter(logits, top_k)
-        probs = softmax(logits)
-        next_id = sampleFromProbs(probs)
+        #logits = topKFilter(logits, top_k)
+        #probs = softmax(logits)
+        #next_id = sampleFromProbs(probs)
+        if top_k is not None and top_k > 0 and top_k < logits.size:
+            idx = np.argpartition(logits, -top_k)[-top_k:]
+            filtered = np.full_like(logits, -1e5)
+            filtered[idx] = logits[idx]
+            logits = filtered
+        probs = softmaxNP(logits)
+        next_id = sampleFromProbsOptimized(probs)
 
         # stop on EOS
         if EOS_ID is not None and next_id == EOS_ID:
@@ -129,8 +163,13 @@ def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50):
 
         # update rolling window: append next_id then keep last SEQ_LEN
         # window_vec is floats; keep sending floats
-        window_vec.append(float(next_id))
-        window_vec = window_vec[-SEQ_LEN:]
+        #window_vec.append(float(next_id))
+        #window_vec = window_vec[-SEQ_LEN:]
+        if len(window_vec) < SEQ_LEN:
+            window_vec.append(float(next_id))
+        else:
+            window_vec[:-1] = window_vec[1:]
+            window_vec[-1] = float(next_id)
 
         # current_len increases until SEQ_LEN, then stays capped
         current_len = min(current_len + 1, SEQ_LEN)
@@ -145,8 +184,8 @@ def apiGenerate():
     text = generateTopK(
         prompt=prompt,
         max_new_tokens=20,
-        temperature=1.0,
-        top_k=50,
+        temperature=0.7,
+        top_k=500,
     )
     return jsonify({"text": text})
 

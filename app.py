@@ -107,7 +107,7 @@ def sampleFromLogits(logits):
     #probs = softmaxNP(np.asarray(logits, dtype=np.float32))
     probs = softmaxNP(np.asarray(logits))
     index = int(np.random.choice(probs.size, p=probs))
-    return logits[index]
+    return index
 
 
 def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50, top_p=0.9):

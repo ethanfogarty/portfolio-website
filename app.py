@@ -106,7 +106,8 @@ def sampleFromLogits(logits):
     """
     #probs = softmaxNP(np.asarray(logits, dtype=np.float32))
     probs = softmaxNP(np.asarray(logits))
-    return int(np.random.choice(probs.size, p=probs))
+    index = int(np.random.choice(probs.size, p=probs))
+    return logits[index]
 
 
 def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50, top_p=0.9):
@@ -126,8 +127,7 @@ def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50, top_
 
         # For teacher-forcing style LM: logits at position t predict token t+1
         # Next token after last real token often comes from pos = current_len - 1
-        #pos = max(current_len - 1, 0)
-        pos = current_len
+        pos = max(current_len - 1, 0)
         logits = np.asarray(logits_2d[pos])
 
         # temperature

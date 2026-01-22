@@ -146,15 +146,15 @@ def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50, top_
 
         # update rolling window: append next_id then keep last SEQ_LEN
         # window_vec is floats; keep sending floats
+        window_vec = [x for x in window_vec if int(x) != PAD_ID]
         if len(window_vec) < SEQ_LEN:
             window_vec.append(float(next_id))
-        else:
-            window_vec = [x for x in window_vec if int(x) != PAD_ID]
-            window_vec[:-1] = window_vec[1:]
-            window_vec[-1] = float(next_id)
             # Pad to SEQ_LEN
             if len(window_vec) < SEQ_LEN:
                 window_vec = window_vec + [PAD_ID] * (SEQ_LEN - len(window_vec))
+        else:
+            window_vec[:-1] = window_vec[1:]
+            window_vec[-1] = float(next_id)
 
         # current_len increases until SEQ_LEN, then stays capped
         current_len = min(current_len + 1, SEQ_LEN)

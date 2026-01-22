@@ -70,11 +70,14 @@
                     ></textarea>
                 </div>
                 <div class="col"><input class="form-control" id="llmInput" type="text" placeholder="Once upon a time, " /></div>
-                <div class="col-auto"><button class="btn btn-primary" id="generateButton" type="submit">Generate</button></div>
+                <div class="col-auto">
+                    <button class="btn btn-primary" id="generateButton" type="submit">Generate</button>
+                    <p class="text-black-50 mb-0">Note: Due to compute limitations of the server this website is hosted on, generation will take a few minutes.</p>
+                </div>
             </div>
             <div class="col-xl-4 col-lg-5">
                 <div class="featured-text text-center text-lg-left">
-                    <h4><a href="https://github.com/ethanfogarty/SAM-1">Coming Soon: SAM-1</a></h4>
+                    <h4><a href="https://github.com/ethanfogarty/SAM-1">SAM-1</a></h4>
                     <p class="text-black-50 mb-0">A 9M parameter causal language model trained on the TinyStories dataset to complete short children's stories.</p>
                 </div>
             </div>
@@ -178,9 +181,4 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Core theme JS-->
 <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
-<!-- * *                               SB Forms JS                               * *-->
-<!-- * * Activate your form at https://startbootstrap.com/solution/contact-forms * *-->
-<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
-<script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
 {% endblock %}

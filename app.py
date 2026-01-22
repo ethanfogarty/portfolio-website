@@ -6,60 +6,30 @@ import numpy as np
 app = Flask(__name__)
 
 TFSERVING_URL = os.getenv("TFSERVING_URL", "http://tfserving:8501/v1/models/sam9M:predict")
+
 SEQ_LEN = 296
-PAD_ID = 0
 VOCAB_SIZE = 15000
-EOS_ID = 2
+
+PAD_ID = 0
 BOS_ID = 1
+EOS_ID = 2
 UNK_ID = 3
+
 try:
     with open("spm.model", "rb") as f:
         SPM_PROTO = f.read()
+    SPM = SentencePieceTokenizer(
+        proto=SPM_PROTO,
+        add_bos=False,
+        add_eos=False,
+    )
 except FileNotFoundError:
     print("Could not load tokenizer.") 
-SPM = SentencePieceTokenizer(
-    proto=SPM_PROTO,
-    add_bos=False,
-    add_eos=False,
-    )
 
 
 # -----------------------------
 # Helpers: sampling + TF call
 # -----------------------------
-def softmaxNP(x):   # Numpy softmax function with significant speedup vs Math softmax
-    x = x - np.max(x)
-    exp_x = np.exp(x)
-    return exp_x / np.sum(exp_x)
-
-
-def topKFilter(logits, k):
-    """Keep only top-k logits; set the rest to a large negative number."""
-    if k is None or k <= 0 or k >= len(logits):
-        return logits
-    idx = sorted(range(len(logits)), key=lambda i: logits[i], reverse=True)
-    keep = set(idx[:k])
-    neg_inf = -1e5
-    return [logits[i] if i in keep else neg_inf for i in range(len(logits))]
-
-
-def sampleFromProbsOptimized(probs):
-    # Vectorized cumulative-sum sampling when probs is a NumPy array (or array-like)
-    if isinstance(probs, np.ndarray):
-        r = np.random.random()
-        cum = np.cumsum(probs)
-        idx = int(np.searchsorted(cum, r, side="right"))
-        return idx if idx < len(probs) else (len(probs) - 1)
-
-    r = random.random()
-    cum = 0.0
-    for i, p in enumerate(probs):
-        cum += p
-        if r <= cum:
-            return i
-    return len(probs) - 1
-
-
 def callTFServing(prompt):
     # input_vec must be length 296 (your args_0)
     payload = {
@@ -94,8 +64,15 @@ def detokenizeIds(token_ids):
     return str(out)
 
 
+def softmaxNP(x):   # Numpy softmax function with significant speedup vs Math softmax
+    x = x - np.max(x)
+    exp_x = np.exp(x)
+    return exp_x / np.sum(exp_x)
+
+
 def filterLogitsTopKTopP(logits, top_k=50, top_p=0.9):
-    logits = np.asarray(logits, dtype=np.float32)
+    #logits = np.asarray(logits, dtype=np.float32)
+    logits = np.asarray(logits)
 
     # --- top-k (matches: min_values = top_k_values[:, -1] then mask < min_values) ---
     k = int(top_k) if top_k is not None else 0
@@ -127,7 +104,8 @@ def sampleFromLogits(logits):
     """
     NumPy equivalent of tf.random.categorical(logits, 1) over a single logit vector.
     """
-    probs = softmaxNP(np.asarray(logits, dtype=np.float32))
+    #probs = softmaxNP(np.asarray(logits, dtype=np.float32))
+    probs = softmaxNP(np.asarray(logits))
     return int(np.random.choice(probs.size, p=probs))
 
 
@@ -148,7 +126,8 @@ def generateTopK(prompt: str, max_new_tokens=20, temperature=1.0, top_k=50, top_
 
         # For teacher-forcing style LM: logits at position t predict token t+1
         # Next token after last real token often comes from pos = current_len - 1
-        pos = max(current_len - 1, 0)
+        #pos = max(current_len - 1, 0)
+        pos = current_len
         logits = np.asarray(logits_2d[pos])
 
         # temperature

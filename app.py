@@ -81,21 +81,21 @@ def filterLogitsTopKTopP(logits, top_k=50, top_p=0.9):
         logits = np.where(logits < kth, -1e10, logits)
 
     # --- top-p / nucleus (matches sort->softmax->cumsum->mask->threshold->mask) ---
-    #p = float(top_p) if top_p is not None else 1.0
-    #if p < 1.0:
-        #sorted_idx = np.argsort(logits)[::-1]
-        #sorted_logits = logits[sorted_idx]
-        #sorted_probs = softmaxNP(sorted_logits)
-        #cumprobs = np.cumsum(sorted_probs)
+    p = float(top_p) if top_p is not None else 1.0
+    if p < 1.0:
+        sorted_idx = np.argsort(logits)[::-1]
+        sorted_logits = logits[sorted_idx]
+        sorted_probs = softmaxNP(sorted_logits)
+        cumprobs = np.cumsum(sorted_probs)
 
-        #cutoff = cumprobs > p
+        cutoff = cumprobs > p
         # shift cutoff right by 1 (keep at least the top token), matching tf.concat([0, cutoff[1:]])
-        #if cutoff.size:
-            #cutoff = np.concatenate([np.array([False]), cutoff[1:]])
+        if cutoff.size:
+            cutoff = np.concatenate([np.array([False]), cutoff[1:]])
 
-        #sorted_logits_masked = np.where(cutoff, -1e10, sorted_logits)
-        #thresh = np.min(sorted_logits_masked)
-        #logits = np.where(logits < thresh, -1e10, logits)
+        sorted_logits_masked = np.where(cutoff, -1e10, sorted_logits)
+        thresh = np.min(sorted_logits_masked)
+        logits = np.where(logits < thresh, -1e10, logits)
 
     return logits
 
@@ -168,7 +168,7 @@ def apiGenerate():
 
     text = generateTopK(
         prompt=prompt,
-        max_new_tokens=20,
+        max_new_tokens=100,
         temperature=0.7,
         top_k=500,
         top_p=0.9,
